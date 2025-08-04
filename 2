@@ -1,1 +1,71 @@
-E:\chinese_painting\2.ipynb
+EMNIST:
+import torch
+import torch.nn as nn
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+
+
+
+train_data = datasets.EMNIST(root='./data', train=True, transform=transforms.ToTensor(), download=True,split='letters')
+train_loader = DataLoader(train_data, batch_size=64, shuffle=True)
+class Model(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.linear = nn.Linear(28*28, 27)
+
+    def forward(self, x):
+        x = x.view(-1, 28*28)  
+        return self.linear(x)  
+
+model = Model()
+loss_fn = nn.CrossEntropyLoss()
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+for images, labels in train_loader:
+    preds = model(images)            
+    loss = loss_fn(preds, labels)    
+
+    optimizer.zero_grad()         
+    loss.backward()             
+    optimizer.step()                
+    break 
+print(f"Loss after one batch: {loss.item():.4f}")
+
+双曲线：
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import font_manager
+x_np = np.linspace(-2 * np.pi, 2 * np.pi, 200).reshape(-1, 1)
+y_np = 1/x_np
+
+x = torch.tensor(x_np, dtype=torch.float32)
+y = torch.tensor(y_np, dtype=torch.float32)
+model = nn.Sequential(
+    nn.Linear(1, 32),   
+    nn.Tanh(),        
+    nn.Linear(32, 1)    
+)
+
+loss_fn = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr=0.01)
+for epoch in range(1000):
+    y_pred = model(x)
+    loss = loss_fn(y_pred, y)
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    if epoch % 100 == 0:
+        print(f"Epoch {epoch}, Loss: {loss.item():.6f}")
+with torch.no_grad():
+    y_fit = model(x)
+
+plt.plot(x_np, y_np, label="True y = sin(x)")
+plt.plot(x_np, y_fit.numpy(), label="Model Prediction", linestyle='--')
+plt.legend()
+plt.title("非线性回归：拟合双曲线反比例函数")  
+plt.grid(True)
+plt.show()
